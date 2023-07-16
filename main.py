@@ -55,7 +55,22 @@ optionalArgs.add_argument(
     help='How many pixels need to be match before it can be considered a cut point. Defaults to 1.',
     dest='matchPx')
 optionalArgs.add_argument(
-    '-c','--space-coordinate',
+    '-c','--color-threshold',
+    type=int,
+    help='How different does the pixel need to be from the background before we can match it',
+    dest='colorThreshold')
+optionalArgs.add_argument(
+    '-to','--top-offset',
+    type=int,
+    help='How many pixels from the top before we can start looking for matches.',
+    dest='topOffset')
+optionalArgs.add_argument(
+    '-bo','--bottom-offset',
+    type=int,
+    help='How many pixels from the bottom until we stop looking for matches.',
+    dest='bottomOffset')
+optionalArgs.add_argument(
+    '-sc','--space-coordinate',
     help="Coordinates of a pixel in the space glyph. I'll do the math for you to find the glyph row and column. Format: x,y",
     dest='spaceCoord')
 optionalArgs.add_argument(
@@ -101,8 +116,11 @@ if len(sys.argv) > 3:
     leftKerning = args.leftKerning
     rightKerning = args.rightKerning
     matchPx = args.matchPx
+    topOffset = args.topOffset
+    bottomOffset = args.bottomOffset
+    colorThreshold = args.colorThreshold
 
-font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, templateFile)
+font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, templateFile)
 cuts = font.cutGlyphs()
 process = font.processCuts()
 output = open(outputFile, 'w')

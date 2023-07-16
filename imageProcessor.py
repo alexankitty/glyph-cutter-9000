@@ -3,7 +3,7 @@ from pathlib import Path
 import regex
 
 class Font:
-    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, template):
+    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, template):
         self.image = Image.open(imagePath)
         self.glyphSize = size
         self.kerning = kerning
@@ -11,6 +11,15 @@ class Font:
         self.leftKerning = leftKerning
         self.rightKerning = rightKerning
         self.width, self.height = self.image.size
+
+        if not topOffset:
+            self.topOffset = 0
+        else:
+            self.topOffset = topOffset
+        if not bottomOffset:
+            self.bottomOffset = self.glyphSize
+        else:
+            self.bottomOffset = self.glyphSize - bottomOffset
         if not matchPx:
             self.matchPx = 1
         else:
@@ -38,6 +47,16 @@ class Font:
         self.glyphColumns = self.width // self.glyphSize
         self.glyphRows = self.height // self.glyphSize
         self.refColor = self.image.getpixel((0,0))
+        if isinstance(self.refColor, tuple):
+            for z in range(len(self.refColor)):
+                if not colorThreshold:
+                    self.colorThreshold[z] = 0
+                else:
+                    self.colorThreshold[z] = self.refColor[z] + colorThreshold
+        elif not colorThreshold:
+            self.colorThreshold = self.refColor
+        else:
+            self.colorThreshold = self.refColor + colorThreshold
         self.cuts = [[None for cols in range(self.glyphColumns)] for rows in range(self.glyphRows)]
     
     def cutGlyphs(self):
@@ -52,18 +71,22 @@ class Font:
                     pixelX = segmentX + x
                     matching = 0
                     for y in range(self.glyphSize):
+                        if y <= self.topOffset:
+                            continue
+                        if y >= self.bottomOffset:
+                            continue
                         pixelY = segmentY + y
                         pixelColor = self.image.getpixel((pixelX,pixelY))
                         if isinstance(pixelColor, tuple):
                             for z in range(len(pixelColor)):
-                                if pixelColor[z] > self.refColor[z]:
+                                if pixelColor[z] > self.colorThreshold[z]:
                                     matching += 1
                                     if matching >= self.matchPx:
                                         if cutPosL == None:
                                             cutPosL = x
                                         if cutPosL >= 0:
                                             cutPosR = x
-                        elif pixelColor > self.refColor:
+                        elif pixelColor > self.colorThreshold:
                             matching += 1
                             if matching >= self.matchPx:
                                 if cutPosL == None:
