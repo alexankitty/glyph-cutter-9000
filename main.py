@@ -88,6 +88,11 @@ optionalArgs.add_argument(
     dest='solidBehavior',
     action='store_true')
 optionalArgs.add_argument(
+    '-r','--retry',
+    help=strings.retryHelp,
+    dest='retry',
+    action='store_true')
+optionalArgs.add_argument(
     '-t','--templatefile',
     dest='templateFile',
     help=strings.templateFileHelp)
@@ -125,12 +130,13 @@ elif len(sys.argv) > 3 and not args.guiEnable:
     bottomOffset = args.bottomOffset
     colorThreshold = args.colorThreshold
     glyphLimit = args.glyphLimit
-    font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, templateFile)
+    retry = args.retry
+    font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, templateFile)
     cuts = font.cutGlyphs()
     process = font.processCuts()
     output = open(outputFile, 'w')
     output.write(process)
-    if not round(random() * 100) == 69:
+    if not round(random.random() * 100) == 69:
         print("Finished cutting fonts. Thank you and have a wonderful day.")
     else:
         print("Finished cutting fonts, now get the hell off my property.")

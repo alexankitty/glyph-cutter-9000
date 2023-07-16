@@ -3,7 +3,7 @@ from pathlib import Path
 import regex
 
 class Font:
-    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, template):
+    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, template):
         self.image = Image.open(imagePath)
         self.glyphSize = size
         self.kerning = kerning
@@ -53,8 +53,8 @@ class Font:
             self.glyphLimit = (self.glyphColumns * self.glyphRows) + glyphLimit
         elif glyphLimit > 0:
             self.glyphLimit = glyphLimit
-        print(self.glyphLimit)
         self.refColor = self.image.getpixel((0,0))
+        
         if isinstance(self.refColor, tuple):
             for z in range(len(self.refColor)):
                 if not colorThreshold:
@@ -66,11 +66,12 @@ class Font:
         else:
             self.colorThreshold = self.refColor + colorThreshold
         self.cuts = [[None for cols in range(self.glyphColumns)] for rows in range(self.glyphRows)]
-    
+        self.retry = retry if retry else None
     def cutGlyphs(self):
         glyphCount = 0
         for row in range(self.glyphRows):
             for col in range(self.glyphColumns):
+                retrying = False
                 if glyphCount >= self.glyphLimit:
                     return self.cuts
                 #Variable clean up
@@ -82,10 +83,12 @@ class Font:
                     pixelX = segmentX + x
                     matching = 0
                     for y in range(self.glyphSize):
-                        if y <= self.topOffset:
+                        
+                        if y <= self.topOffset and not retrying:
                             continue
-                        if y >= self.bottomOffset:
+                        if y >= self.bottomOffset and not retrying:
                             continue
+                        print(y)
                         pixelY = segmentY + y
                         pixelColor = self.image.getpixel((pixelX,pixelY))
                         if isinstance(pixelColor, tuple):
@@ -109,9 +112,19 @@ class Font:
                     self.cuts[row][col] = (center - self.spaceSize, center + self.spaceSize)
                 elif cutPosL == None and cutPosR == None:
                     if self.empty == 0:
+                        if self.retry and not retrying:
+                            x = -1
+                            y = -1
+                            retrying = True
+                            continue
                         print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s." % (row, col, 0))
                         self.cuts[row][col] = (0,0)
                     else:
+                        if self.retry and not retrying:
+                            x = -1
+                            y = -1
+                            retrying = True
+                            continue
                         print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s from center." % (row, col, self.empty))
                         self.cuts[row][col] = (center - self.empty, center + self.empty)
                 elif cutPosL == 0 and cutPosR == self.glyphSize - 1:

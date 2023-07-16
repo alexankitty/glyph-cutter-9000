@@ -16,3 +16,4 @@ templateFileHelp='Path to a template text file to tell this program how to build
 guiHelp='Display the GUI version for inputting these arguments.'
 help='Show this help message and exit'
 glyphLimitHelp='How many glyphs you want to process. Set this value to a negative to subtract from the total glyph count.'
+retryHelp="Re-attempt to cut an unsuccessful glyph by ignoring the top and bottom offsets"

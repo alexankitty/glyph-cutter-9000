@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 import sys
 import imageProcessor
 import strings
+import random
 def run():
     file_list_column = [
         [
@@ -80,6 +81,9 @@ def run():
             sg.Checkbox('Treat Solid Glyph As End', key="solidBehavior", tooltip=strings.solidBehaviorHelp)
         ],
         [
+            sg.Checkbox('Retry On Cut Failure', key="retry", tooltip=strings.retryHelp)
+        ],
+        [
             sg.Button('Cut Fonts!', enable_events=True, key='-CUTFONTS-')
         ]
     ]
@@ -136,6 +140,7 @@ def cutFonts(values):
         spaceSize = None if not values['spaceSize'] else int(values['spaceSize'])
         emptySize = None if not values['emptySize'] else int(values['emptySize']) 
         glyphLimit = None if not values['glyphLimit'] else int(values['glyphLimit'])
+        retry = values['retry']
         if not spaceCoord:
             spaceCoord = None
     except Exception:
@@ -146,9 +151,12 @@ def cutFonts(values):
         sg.popup_error("Missing a required field.")
         return
 
-    font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, spaceSize, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPX, topOffset, bottomOffset, colorThreshold, glyphLimit, templateFile)
+    font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, spaceSize, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPX, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, templateFile)
     cuts = font.cutGlyphs()
     process = font.processCuts()
     output = open(outputFile, 'w')
     output.write(process)
-    print("Finished cutting fonts. Thank you and have a wonderful day.")
+    if not round(random.random() * 100) == 69:
+        print("Finished cutting fonts. Thank you and have a wonderful day.")
+    else:
+        print("Finished cutting fonts, now get the hell off my property.")
