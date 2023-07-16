@@ -79,14 +79,17 @@ class Font:
                 cutPosR = None
                 segmentX = self.glyphSize * col
                 segmentY = self.glyphSize * row
-                for x in range(self.glyphSize):
+                x = 0
+                while x < self.glyphSize:
                     pixelX = segmentX + x
                     matching = 0
-                    for y in range(self.glyphSize):
-                        
+                    y = 0
+                    while y < self.glyphSize:
                         if y <= self.topOffset and not retrying:
+                            y +=1
                             continue
                         if y >= self.bottomOffset and not retrying:
+                            y +=1
                             continue
                         pixelY = segmentY + y
                         pixelColor = self.image.getpixel((pixelX,pixelY))
@@ -106,24 +109,22 @@ class Font:
                                     cutPosL = x
                                 if cutPosL >= 0:
                                     cutPosR = x + 1
+                        y +=1
+                    x +=1
+                    if x == self.glyphSize and cutPosL == None and cutPosR == None and not retrying:
+                        x = 0
+                        y = 0
+                        retrying = True
+                        print("Failed to find a cut for X:%s Y:%s. Retrying without offsets." % (row, col))
                 center = self.glyphSize // 2
                 if self.space == True and row == self.spaceX and col == self.spaceY:
                     self.cuts[row][col] = (center - self.spaceSize, center + self.spaceSize)
+                
                 elif cutPosL == None and cutPosR == None:
                     if self.empty == 0:
-                        if self.retry and not retrying:
-                            x = -1
-                            y = -1
-                            retrying = True
-                            continue
                         print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s." % (row, col, 0))
                         self.cuts[row][col] = (0,0)
                     else:
-                        if self.retry and not retrying:
-                            x = -1
-                            y = -1
-                            retrying = True
-                            continue
                         print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s from center." % (row, col, self.empty))
                         self.cuts[row][col] = (center - self.empty, center + self.empty)
                 elif cutPosL == 0 and cutPosR == self.glyphSize - 1:
