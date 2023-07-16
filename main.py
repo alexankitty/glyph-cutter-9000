@@ -66,10 +66,10 @@ optionalArgs.add_argument(
     help='Show this help message and exit',
     action='help')
 
-args = parser.parse_args()
+
 if len(sys.argv) < 2:
     parser.print_help()
-
+args = parser.parse_args()
 # To do: Call GUI here before we dive into converting to globals.
 
 # Convert arguments into globals.
