@@ -9,9 +9,9 @@ This will cut glyphs from a provided bitmap font, and either dumped into a csv l
 
 ## Usage and help
 ```
-usage: Glyph Cutter 9000 -i IMAGEFILE -s GLYPHSIZE -k KERNINGSIZE -o OUTPUTFILE [-sp SPACESIZE] [-lk] [-rk]
+usage: Glyph Cutter 9000 [-i IMAGEFILE] [-s GLYPHSIZE] [-k KERNINGSIZE] [-o OUTPUTFILE] [-sp SPACESIZE] [-lk] [-rk]
                          [-m MATCHPX] [-c COLORTHRESHOLD] [-to TOPOFFSET] [-bo BOTTOMOFFSET] [-sc SPACECOORD]
-                         [-e EMPTYSIZE] [-T] [-t TEMPLATEFILE] [-g] [-h]
+                         [-e EMPTYSIZE] [-gl GLYPHLIMIT] [-T] [-r] [-t TEMPLATEFILE] [-g] [-h]
 
 Cuts bitmap glyphs to a template type of your choosing.
 
@@ -45,8 +45,12 @@ optional arguments:
                         column. Format: x,y
   -e EMPTYSIZE, --empty EMPTYSIZE
                         Amount of space (in px) for glyphs where a cut cannot be found.
+  -gl GLYPHLIMIT, --glyph-limit GLYPHLIMIT
+                        How many glyphs you want to process. Set this value to a negative to subtract from the total
+                        glyph count.
   -T, --treat-solid-as-end
                         Treats any completely solid glyphs as the end of the glyph set.
+  -r, --retry           Re-attempt to cut an unsuccessful glyph by ignoring the top and bottom offsets
   -t TEMPLATEFILE, --templatefile TEMPLATEFILE
                         Path to a template text file to tell this program how to build the cuts into the output. Not
                         including a template will put the cuts directly into a txt file.
@@ -54,9 +58,11 @@ optional arguments:
   -h, --help            Show this help message and exit
 ```
 
-`python .\main.py -i .\FONT0.BMP -s 32 -k 2 -e 4 -o "FONT0 WIDTH TABLE.XML" -T -sp 15 -sc 5,5 -m 2 -t exampletemplate.xml -c 10 -lk`  
+`python .\main.py -i .\FONT0.png -k 0 -s 32 -o .\FONT0.XML -t .\exampletemplate.xml -gl -6 -to 14 -sp 16 -sc 5,5`  
 
-Keep in mind, the result won't be perfect but should be fairly close. You'll want to look over the font and make any other tweaks as needed.
+Keep in mind, the result won't be perfect but should be fairly close. You'll want to look over the font and make any other tweaks as needed.  
+
+Use the gui by either running main.py directly, or by using -g when executing main.py.
 
 ## Template formating
 An exampletemplate.xml is included, but you can really use any format as long as it's a text file.
