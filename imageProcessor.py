@@ -3,7 +3,7 @@ from pathlib import Path
 import regex
 
 class Font:
-    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, template):
+    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, template):
         self.image = Image.open(imagePath)
         self.glyphSize = size
         self.kerning = kerning
@@ -47,6 +47,13 @@ class Font:
                             Image size: X:%s Y:%s Provided Glyph Size: %spx""" % (self.width, self.height, self.glyphSize))
         self.glyphColumns = self.width // self.glyphSize
         self.glyphRows = self.height // self.glyphSize
+        if not glyphLimit:
+            self.glyphLimit = self.glyphColumns * self.glyphRows
+        elif glyphLimit < 0:
+            self.glyphLimit = (self.glyphColumns * self.glyphRows) + glyphLimit
+        elif glyphLimit > 0:
+            self.glyphLimit = glyphLimit
+        print(self.glyphLimit)
         self.refColor = self.image.getpixel((0,0))
         if isinstance(self.refColor, tuple):
             for z in range(len(self.refColor)):
@@ -61,8 +68,11 @@ class Font:
         self.cuts = [[None for cols in range(self.glyphColumns)] for rows in range(self.glyphRows)]
     
     def cutGlyphs(self):
+        glyphCount = 0
         for row in range(self.glyphRows):
             for col in range(self.glyphColumns):
+                if glyphCount >= self.glyphLimit:
+                    return self.cuts
                 #Variable clean up
                 cutPosL = None
                 cutPosR = None
@@ -86,14 +96,14 @@ class Font:
                                         if cutPosL == None:
                                             cutPosL = x
                                         if cutPosL >= 0:
-                                            cutPosR = x
+                                            cutPosR = x + 1
                         elif pixelColor > self.colorThreshold:
                             matching += 1
                             if matching >= self.matchPx:
                                 if cutPosL == None:
                                     cutPosL = x
                                 if cutPosL >= 0:
-                                    cutPosR = x
+                                    cutPosR = x + 1
                 center = self.glyphSize // 2
                 if self.space == True and row == self.spaceX and col == self.spaceY:
                     self.cuts[row][col] = (center - self.spaceSize, center + self.spaceSize)
@@ -127,6 +137,7 @@ class Font:
                     if cutPosR > self.glyphSize - 1:
                         cutPosR = self.glyphSize - 1
                     self.cuts[row][col] = (cutPosL, cutPosR)
+                glyphCount += 1
         return self.cuts
     
     def processCuts(self):

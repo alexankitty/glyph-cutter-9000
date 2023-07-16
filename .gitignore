@@ -163,3 +163,4 @@ cython_debug/
 *.xml
 *.csv
 *.bmp
+*.png
