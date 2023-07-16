@@ -154,27 +154,22 @@ class Font:
         return self.cuts
     
     def processCuts(self):
-        processed = ""
-        #Default processing if we don't have a template
-        if not self.template:
-            for row in range(len(self.cuts)):
-                if self.cuts[row] == None:
-                    return processed
-                for col in range(len(self.cuts[row])):
-                    if self.cuts[row][col] == None:
-                        return processed
-                    processed += "(%s,%s)," % self.cuts[row][col]
-                processed += "\n"
-            return processed
+        # Safety protection
         if self.template:
+            return self.defaultProcessing()
+        else:
             self.templateLeftover = Path(self.template).read_text(encoding='UTF-8')
-            colDeepest = self.getDeepestItem("startcol", self.templateLeftover) > self.getDeepestItem("startrow", self.templateLeftover)
-            if colDeepest:
-                templateColumn = self.getSectionTemplate("col", self.templateLeftover)
-                templateRow = self.getSectionTemplate("row", self.templateLeftover)
-            else:
-                templateRow = self.getSectionTemplate("row", self.templateLeftover)
-                templateColumn = self.getSectionTemplate("col", self.templateLeftover)
+            
+            advancedFormat = True if self.checkIfExist("startcol", self.templateLeftover) and self.checkIfExist("startrow", self.templateLeftover) else False
+            
+            if advancedFormat:
+                colDeepest = self.getDeepestItem("startcol", self.templateLeftover) > self.getDeepestItem("startrow", self.templateLeftover)
+                if colDeepest and advancedFormat:
+                    templateColumn = self.getSectionTemplate("col", self.templateLeftover)
+                    templateRow = self.getSectionTemplate("row", self.templateLeftover)
+                else:
+                    templateRow = self.getSectionTemplate("row", self.templateLeftover)
+                    templateColumn = self.getSectionTemplate("col", self.templateLeftover)
             processedColumn = ""
             processedRow = ""
             processedTemplate = ""
@@ -272,6 +267,23 @@ class Font:
         template = self.parseTemplate("rightcut", template, cuts[1])
         return template
     
+    def checkIfExist(self, search, template):
+        regExList = regex.findall(r"\$" + search, template)
+        return True if len(regExList) else False
+    
     def getDeepestItem(self, search, template):
         deepest = regex.search(r"\$"+ search, template).span()[1]
         return deepest
+    
+    def defaultProcessing(self):
+        processed = ""
+        #Default processing if we don't have a template
+        for row in range(len(self.cuts)):
+            if self.cuts[row] == None:
+                return processed
+            for col in range(len(self.cuts[row])):
+                if self.cuts[row][col] == None:
+                    return processed
+                processed += "(%s,%s)," % self.cuts[row][col]
+            processed += "\n"
+        return processed
