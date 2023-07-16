@@ -52,7 +52,7 @@ optionalArgs.add_argument(
 optionalArgs.add_argument(
     '-m','--match-threshold',
     type=int,
-    help='How many pixels need to be match before it can be considered a cut point. Defaults to 1.',
+    help='How many pixels need to be matched before it can be considered a cut point. Defaults to 1.',
     dest='matchPx')
 optionalArgs.add_argument(
     '-c','--color-threshold',
