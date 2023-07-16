@@ -3,16 +3,22 @@ from pathlib import Path
 import regex
 
 class Font:
-    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, template):
+    def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, template):
         self.image = Image.open(imagePath)
         self.glyphSize = size
         self.kerning = kerning
         self.template = template
+        self.leftKerning = leftKerning
+        self.rightKerning = rightKerning
         self.width, self.height = self.image.size
+        if not matchPx:
+            self.matchPx = 1
+        else:
+            self.matchPx = matchPx
         if not empty:
             self.empty = 0
         else:
-            self.empty = self.glyphSize // 2
+            self.empty = empty // 2
         if not space:
             self.spaceSize = 0
         else:
@@ -44,38 +50,59 @@ class Font:
                 segmentY = self.glyphSize * row
                 for x in range(self.glyphSize):
                     pixelX = segmentX + x
+                    matching = 0
                     for y in range(self.glyphSize):
                         pixelY = segmentY + y
                         pixelColor = self.image.getpixel((pixelX,pixelY))
                         if isinstance(pixelColor, tuple):
                             for z in range(len(pixelColor)):
                                 if pixelColor[z] > self.refColor[z]:
-                                    if cutPosL == None:
-                                        cutPosL = x
-                                    if cutPosL >= 0:
-                                        cutPosR = self.glyphSize - 1 - x
+                                    matching += 1
+                                    if matching >= self.matchPx:
+                                        if cutPosL == None:
+                                            cutPosL = x
+                                        if cutPosL >= 0:
+                                            cutPosR = x
                         elif pixelColor > self.refColor:
-                            if cutPosL == None:
-                                cutPosL = x
-                            if cutPosL >= 0:
-                                cutPosR = self.glyphSize - 1 - x
+                            matching += 1
+                            if matching >= self.matchPx:
+                                if cutPosL == None:
+                                    cutPosL = x
+                                if cutPosL >= 0:
+                                    cutPosR = x
                 center = self.glyphSize // 2
                 if self.space == True and row == self.spaceX and col == self.spaceY:
                     self.cuts[row][col] = (center - self.spaceSize, center + self.spaceSize)
                 elif cutPosL == None and cutPosR == None:
-                    if center == self.empty:
+                    if self.empty == 0:
                         print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s." % (row, col, 0))
                         self.cuts[row][col] = (0,0)
                     else:
                         print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s from center." % (row, col, self.empty))
                         self.cuts[row][col] = (center - self.empty, center + self.empty)
-                elif cutPosL == 0 and cutPosR == 0:
+                elif cutPosL == 0 and cutPosR == self.glyphSize - 1:
                     if self.solidBehavior:
                         print("Reached end of glyphs, not processing more.")
                         return self.cuts
                     self.cuts[row][col] = (0,0)
                 else:
-                    self.cuts[row][col] = (cutPosL - self.kerning, cutPosR - self.kerning)
+                    if self.leftKerning:
+                        cutPosL -= self.kerning
+                    if self.rightKerning:
+                        cutPosR += self.kerning
+                    if not self.leftKerning and not self.rightKerning:
+                        cutPosL -= self.kerning
+                        cutPosR += self.kerning
+                    ## checking if we go out of bounds.
+                    if cutPosL < 0:
+                        cutPosL = 0
+                    if cutPosR < 0:
+                        cutPosR = 0
+                    if cutPosL > self.glyphSize - 1:
+                        cutPosL = self.glyphSize - 1
+                    if cutPosR > self.glyphSize - 1:
+                        cutPosR = self.glyphSize - 1
+                    self.cuts[row][col] = (cutPosL, cutPosR)
         return self.cuts
     
     def processCuts(self):

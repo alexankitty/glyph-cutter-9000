@@ -40,6 +40,21 @@ optionalArgs.add_argument(
     help='Size (in px) of the space character.',
     dest='spaceSize')
 optionalArgs.add_argument(
+    '-lk','--leftside-kerning',
+    help='Apply kerning to left side (by default we assume both sides).',
+    dest='leftKerning',
+    action='store_true')
+optionalArgs.add_argument(
+    '-rk','--rightside-kerning',
+    help='Apply kerning to right side (by default we assume both sides).',
+    dest='rightKerning',
+    action='store_true')
+optionalArgs.add_argument(
+    '-m','--match-threshold',
+    type=int,
+    help='How many pixels need to be match before it can be considered a cut point. Defaults to 1.',
+    dest='matchPx')
+optionalArgs.add_argument(
     '-c','--space-coordinate',
     help="Coordinates of a pixel in the space glyph. I'll do the math for you to find the glyph row and column. Format: x,y",
     dest='spaceCoord')
@@ -83,8 +98,11 @@ if len(sys.argv) > 3:
     spaceCoord = args.spaceCoord
     solidBehavior = args.solidBehavior
     templateFile = args.templateFile
+    leftKerning = args.leftKerning
+    rightKerning = args.rightKerning
+    matchPx = args.matchPx
 
-font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, templateFile)
+font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, templateFile)
 cuts = font.cutGlyphs()
 process = font.processCuts()
 output = open(outputFile, 'w')
