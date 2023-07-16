@@ -11,7 +11,6 @@ class Font:
         self.leftKerning = leftKerning
         self.rightKerning = rightKerning
         self.width, self.height = self.image.size
-
         if not topOffset:
             self.topOffset = 0
         else:
@@ -37,6 +36,8 @@ class Font:
             self.spaceX = int(string[0]) // self.glyphSize
             self.spaceY = int(string[1]) // self.glyphSize
             self.space = True
+        else:
+            self.space = False
         if solidBehavior:
             self.solidBehavior = True
         else:

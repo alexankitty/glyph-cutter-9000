@@ -1,6 +1,7 @@
 import argparse
 import sys
 import imageProcessor
+import gui
 
 # Setup Argument Parsing
 parser = argparse.ArgumentParser(
@@ -15,25 +16,21 @@ optionalArgs = parser.add_argument_group('optional arguments')
 requiredArgs.add_argument(
     '-i','--imagefile',
     help='Path to a bitmap image with glyphs to cut.',
-    dest='imageFile',
-    required=True)
+    dest='imageFile')
 requiredArgs.add_argument(
     '-s','--size',
     type=int,
     help='Size (in px) of each glyph section to cut.',
-    dest='glyphSize',
-    required=True)
+    dest='glyphSize')
 requiredArgs.add_argument(
     '-k','--kerning',
     type=int,
     help='Amount of space (in px) between each glyph.',
-    dest='kerningSize',
-    required=True)
+    dest='kerningSize')
 requiredArgs.add_argument(
     '-o','--output',
     help='Where to save the file once done.',
-    dest='outputFile',
-    required=True)
+    dest='outputFile')
 optionalArgs.add_argument(
     '-sp','--space',
     type=int,
@@ -90,6 +87,7 @@ optionalArgs.add_argument(
 optionalArgs.add_argument(
     '-g','--gui',
     help='Display the GUI version for inputting these arguments.',
+    dest='guiEnable',
     action='store_true')
 optionalArgs.add_argument(
     '-h','--help',
@@ -101,9 +99,10 @@ if len(sys.argv) < 2:
     parser.print_help()
 args = parser.parse_args()
 # To do: Call GUI here before we dive into converting to globals.
-
+if args.guiEnable:
+    gui.run()
 # Convert arguments into globals.
-if len(sys.argv) > 3:
+elif len(sys.argv) > 3 and not args.guiEnable:
     imageFile = args.imageFile
     glyphSize = args.glyphSize
     kerningSize = args.kerningSize
@@ -119,9 +118,8 @@ if len(sys.argv) > 3:
     topOffset = args.topOffset
     bottomOffset = args.bottomOffset
     colorThreshold = args.colorThreshold
-
-font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, templateFile)
-cuts = font.cutGlyphs()
-process = font.processCuts()
-output = open(outputFile, 'w')
-output.write(process)
+    font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, templateFile)
+    cuts = font.cutGlyphs()
+    process = font.processCuts()
+    output = open(outputFile, 'w')
+    output.write(process)
