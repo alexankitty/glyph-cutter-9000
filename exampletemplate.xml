@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WidthTable>
+  $startrow
+  <Line_($row + 1)>
+    $startcol
+    <Glyph_($col + 1)>
+	  <LeftCut>$leftcut</LeftCut>
+      <RightCut>$rightcut</RightCut>
+    </Glyph_($col + 1)>
+	$endcol
+  </Line_($row + 1)>
+  $endrow
+</WidthTable>
