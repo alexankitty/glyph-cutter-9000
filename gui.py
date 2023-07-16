@@ -68,7 +68,7 @@ def run():
             sg.In(size=(20, 1), key="spaceCoord")
         ],   
         [
-            sg.Text("Empty Glyph Size (px):",size=(19,1), tooltip=strings.glyphSizeHelp),
+            sg.Text("Empty Glyph Size (px):",size=(19,1), tooltip=strings.emptySizeHelp),
             sg.In(size=(20, 1), key="emptySize")
         ],
         [
