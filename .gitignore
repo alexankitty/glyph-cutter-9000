@@ -1,3 +1,4 @@
 *.BMP
 *.csv
 *.xml
+__pycache__/*
