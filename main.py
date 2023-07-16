@@ -112,8 +112,7 @@ if len(sys.argv) < 2:
 args = parser.parse_args()
 if args.guiEnable:
     gui.run()
-# Convert arguments into globals.
-elif len(sys.argv) > 3 and not args.guiEnable:
+else:
     imageFile = args.imageFile
     glyphSize = args.glyphSize
     kerningSize = args.kerningSize
@@ -131,6 +130,10 @@ elif len(sys.argv) > 3 and not args.guiEnable:
     colorThreshold = args.colorThreshold
     glyphLimit = args.glyphLimit
     retry = args.retry
+    if imageFile == None or glyphSize == None or kerningSize == None or  outputFile == None:
+        print("Missing required arguments")
+        parser.print_help()
+        sys.exit()
     font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, templateFile)
     cuts = font.cutGlyphs()
     process = font.processCuts()
