@@ -6,8 +6,6 @@ This will cut glyphs from a provided bitmap font, and either dumped into a csv l
 2. `pip install requirements.txt`
 3. Run the program using python
 
-Example usage:
-`python .\main.py -i .\FONT0.BMP -s 32 -k 2 -e 4 -o "FONT0 WIDTH TABLE.XML" -T -sp 15 -sc 5,5 -m 2 -t exampletemplate.xml -c 10 -lk`
 
 ## Usage and help
 ```
@@ -55,6 +53,10 @@ optional arguments:
   -g, --gui             Display the GUI version for inputting these arguments.
   -h, --help            Show this help message and exit
 ```
+
+`python .\main.py -i .\FONT0.BMP -s 32 -k 2 -e 4 -o "FONT0 WIDTH TABLE.XML" -T -sp 15 -sc 5,5 -m 2 -t exampletemplate.xml -c 10 -lk`  
+
+Keep in mind, the result won't be perfect but should be fairly close. You'll want to look over the font and make any other tweaks as needed.
 
 ## Template formating
 An exampletemplate.xml is included, but you can really use any format as long as it's a text file.
