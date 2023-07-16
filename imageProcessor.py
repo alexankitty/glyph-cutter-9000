@@ -155,13 +155,12 @@ class Font:
     
     def processCuts(self):
         # Safety protection
-        if self.template:
+        if not self.template:
             return self.defaultProcessing()
         else:
             self.templateLeftover = Path(self.template).read_text(encoding='UTF-8')
-            
-            advancedFormat = True if self.checkIfExist("startcol", self.templateLeftover) and self.checkIfExist("startrow", self.templateLeftover) else False
-            
+            self.checkTemplateStrings()
+            advancedFormat = self.checkAdvancedFormat()
             if advancedFormat:
                 colDeepest = self.getDeepestItem("startcol", self.templateLeftover) > self.getDeepestItem("startrow", self.templateLeftover)
                 if colDeepest and advancedFormat:
@@ -173,7 +172,7 @@ class Font:
             processedColumn = ""
             processedRow = ""
             processedTemplate = ""
-            if not templateColumn and not templateRow:
+            if not advancedFormat:
                 for row in range(len(self.cuts)):
                     if self.cuts[row] == None:
                         break
@@ -275,6 +274,47 @@ class Font:
         deepest = regex.search(r"\$"+ search, template).span()[1]
         return deepest
     
+    def checkTemplateStrings(self):
+        missing = ""
+        missingCount = 0
+        print("checking template strings")
+        if not self.checkIfExist("row", self.templateLeftover):
+            missing += "$row"
+            missingCount += 1
+        if not self.checkIfExist("col", self.templateLeftover):
+            missing += " $col"
+            missingCount += 1
+        if not self.checkIfExist("leftcut", self.templateLeftover):
+            missing += " $leftcut"
+            missingCount += 1
+        if not self.checkIfExist("rightcut", self.templateLeftover):
+            missing += " $rightcut"
+            missingCount += 1
+        if missingCount == 4:
+            raise Exception("Template has no replaceable strings, verify one of %s are present." % missing)
+        elif missingCount:
+            print("The following items are missing in the template, output may not be as expected: %s." % missing)
+    def checkAdvancedFormat(self):
+        missing = ""
+        missingCount = 0
+        if not self.checkIfExist("startcol", self.templateLeftover):
+            missing += "$startcol"
+            missingCount += 1
+        if not self.checkIfExist("startrow", self.templateLeftover):
+            missing += " $startrow"
+            missingCount += 1
+        if not self.checkIfExist("endcol", self.templateLeftover):
+            missing +=  " $endcol"
+            missingCount += 1
+        if not self.checkIfExist("endrow", self.templateLeftover):
+            missing += " $endrow"
+            missingCount += 1
+        if missingCount == 4:
+            return False
+        elif missingCount == 0:
+            return True
+        else:
+            raise Exception("Not all criteria of advanced formatting are met. The following are missing: %s." % missing)
     def defaultProcessing(self):
         processed = ""
         #Default processing if we don't have a template

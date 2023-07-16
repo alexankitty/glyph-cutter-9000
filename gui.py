@@ -150,12 +150,14 @@ def cutFonts(values):
     if not imageFile or not outputFile or kerningSize == "" or glyphSize == "":
         sg.popup_error("Missing a required field.")
         return
-
-    font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, spaceSize, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPX, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, templateFile)
-    cuts = font.cutGlyphs()
-    process = font.processCuts()
-    output = open(outputFile, 'w')
-    output.write(process)
+    try:
+        font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, spaceSize, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPX, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, templateFile)
+        cuts = font.cutGlyphs()
+        process = font.processCuts()
+        output = open(outputFile, 'w')
+        output.write(process)
+    except Exception as e:
+        sg.popup_error_with_traceback(str(e))
     if not round(random.random() * 100) == 69:
         print("Finished cutting fonts. Thank you and have a wonderful day.")
     else:
