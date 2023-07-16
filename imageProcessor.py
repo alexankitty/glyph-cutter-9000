@@ -88,7 +88,6 @@ class Font:
                             continue
                         if y >= self.bottomOffset and not retrying:
                             continue
-                        print(y)
                         pixelY = segmentY + y
                         pixelColor = self.image.getpixel((pixelX,pixelY))
                         if isinstance(pixelColor, tuple):
