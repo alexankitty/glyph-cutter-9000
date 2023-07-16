@@ -51,3 +51,4 @@ $rightcut - number of pixels from the right side up to the first differing pixel
 You must use both or neither of the below.  
 $startcol - Section of your column format data.  
 $startrow - section of your row format data  
+The script will automagically determine whichever instance is deeper and act accordingly.
