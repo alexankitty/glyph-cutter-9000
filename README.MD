@@ -72,7 +72,7 @@ An exampletemplate.xml is included, but you can really use any format as long as
 $row - row number of each glyph.  
 $col - column number of each glyph  
 $leftcut - number of pixels from the left side up to the first differing pixel minus kerning  
-$rightcut - number of pixels from the left side to the right most differing pixel plus kerning
+$rightcut - number of pixels from the left side to the right most differing pixel plus kerning  
 Any placeholders can be wrapped in parentheses to perform a mathematical calculation on them.  
 Ex: ($row + 1) to make the row count start at one.
   
