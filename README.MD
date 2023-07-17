@@ -17,13 +17,14 @@ Cuts bitmap glyphs to a template type of your choosing.
 
 required arguments:
   -i IMAGEFILE, --imagefile IMAGEFILE
-                        Path to a bitmap image with glyphs to cut.
+                        Path to an image with glyphs (fonts) to cut.
   -s GLYPHSIZE, --size GLYPHSIZE
-                        Size (in px) of each glyph section to cut.
+                        Size (in px) of each glyph section to cut. If unsure, you'll need to check in your image
+                        editor and setup a grid until everything is evenly sized.
   -k KERNINGSIZE, --kerning KERNINGSIZE
                         Amount of space (in px) between each glyph.
   -o OUTPUTFILE, --output OUTPUTFILE
-                        Where to save the file once done.
+                        Where to save the file once done. It can be in any text format.
 
 optional arguments:
   -sp SPACESIZE, --space SPACESIZE
@@ -35,7 +36,7 @@ optional arguments:
   -m MATCHPX, --match-threshold MATCHPX
                         How many pixels need to be matched before it can be considered a cut point. Defaults to 1.
   -c COLORTHRESHOLD, --color-threshold COLORTHRESHOLD
-                        How different does the pixel need to be from the background before we can match it
+                        How different does the pixel need to be from the background before we can count is as a match
   -to TOPOFFSET, --top-offset TOPOFFSET
                         How many pixels from the top before we can start looking for matches.
   -bo BOTTOMOFFSET, --bottom-offset BOTTOMOFFSET
@@ -53,9 +54,10 @@ optional arguments:
   -r, --retry           Re-attempt to cut an unsuccessful glyph by ignoring the top and bottom offsets
   -t TEMPLATEFILE, --templatefile TEMPLATEFILE
                         Path to a template text file to tell this program how to build the cuts into the output. Not
-                        including a template will put the cuts directly into a txt file.
+                        including a template will put the cuts directly into a txt file. Please refer to the readme
+                        for more info.
   -g, --gui             Display the GUI version for inputting these arguments.
-  -h, --help            Show this help message and exit
+  -h, --help            Show this help message and exit.
 ```
 
 `python .\main.py -i .\FONT0.png -k 0 -s 32 -o .\FONT0.XML -t .\exampletemplate.xml -gl -6 -to 14 -sp 16 -sc 5,5`  
