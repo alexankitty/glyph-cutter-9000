@@ -4,7 +4,7 @@
   <Line_($row + 1)>
     $startcol
     <Glyph_($col + 1)>
-	  <LeftCut>$leftcut</LeftCut>
+	    <LeftCut>$leftcut</LeftCut>
       <RightCut>$rightcut</RightCut>
     </Glyph_($col + 1)>
 	$endcol
