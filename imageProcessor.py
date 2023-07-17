@@ -185,7 +185,6 @@ class Font:
                 currentRow = self.parseTemplate("replacecol", currentRow, processedColumn)
                 processedRow += currentRow
             processedTemplate = self.parseTemplate("replacerow", self.templateLeftover, processedRow)
-
         else:
             row = 0
             for col in range(len(self.cuts[row])):
