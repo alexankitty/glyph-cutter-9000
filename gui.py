@@ -28,7 +28,7 @@ def run():
         [
             sg.Text("Output File:",size=(19,1), tooltip=strings.outputFileHelp),
             sg.In(size=(20, 1), key="outputFile"),
-            sg.FileSaveAs()
+            sg.FileSaveAs(file_types = (('Text Files','*.*'),))
         ],
         [
             sg.Text("Kerning Size (px):",size=(19,1), enable_events=True, tooltip=strings.kerningSizeHelp),
