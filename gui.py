@@ -1,9 +1,17 @@
 import PySimpleGUI as sg
+import contextlib
 import sys
 import imageProcessor
 import strings
 import random
+import regex
+import contextlib
+
 def run():
+    def validate(text):
+        result = regex.match(regexSearch, text)
+        return result is not None and result.group() == text
+
     file_list_column = [
         [
             sg.Text('Required Fields'),
@@ -23,11 +31,11 @@ def run():
             sg.FileSaveAs()
         ],
         [
-            sg.Text("Kerning Size (px):",size=(19,1), tooltip=strings.kerningSizeHelp),
+            sg.Text("Kerning Size (px):",size=(19,1), enable_events=True, tooltip=strings.kerningSizeHelp),
             sg.In(size=(20, 1), key="kerningSize")
         ],
         [
-            sg.Text("Glyph Size (px):",size=(19,1), tooltip=strings.glyphSizeHelp),
+            sg.Text("Glyph Size (px):",size=(19,1), enable_events=True, tooltip=strings.glyphSizeHelp),
             sg.In(size=(20, 1), key="glyphSize")
         ],
         [
@@ -35,7 +43,7 @@ def run():
             sg.HSep(color=None, pad=None)
         ],
         [
-            sg.Text("Glyph Limit:", size=(19,1), tooltip=strings.glyphLimitHelp),
+            sg.Text("Glyph Limit:", size=(19,1), enable_events=True, tooltip=strings.glyphLimitHelp),
             sg.In(size=(20,1), key="glyphLimit")
         ],
         [
@@ -44,23 +52,23 @@ def run():
             sg.FileBrowse(button_text="Browse")
         ],
         [
-            sg.Text("Matching pixel count (px):",size=(19,1), tooltip=strings.matchPxHelp),
+            sg.Text("Matching pixel count (px):",size=(19,1), enable_events=True, tooltip=strings.matchPxHelp),
             sg.In(size=(20, 1), key="matchPX")
         ],
         [
-            sg.Text("Color Threshold:",size=(19,1), tooltip=strings.colorThresholdHelp),
+            sg.Text("Color Threshold:",size=(19,1), enable_events=True, tooltip=strings.colorThresholdHelp),
             sg.In(size=(20, 1), key="colorThreshold")
         ],
                 [
-            sg.Text("Top offset (px):",size=(19,1), tooltip=strings.topOffsetHelp),
+            sg.Text("Top offset (px):",size=(19,1), enable_events=True, tooltip=strings.topOffsetHelp),
             sg.In(size=(20, 1),key="topOffset")
         ],
         [
-            sg.Text("Bottom offset (px):",size=(19,1), tooltip=strings.bottomOffsetHelp),
+            sg.Text("Bottom offset (px):",size=(19,1), enable_events=True, tooltip=strings.bottomOffsetHelp),
             sg.In(size=(20, 1), key="bottomOffset")
         ],
         [
-            sg.Text("Space size (px):",size=(19,1), tooltip=strings.spaceSizeHelp),
+            sg.Text("Space size (px):",size=(19,1), enable_events=True, tooltip=strings.spaceSizeHelp),
             sg.In(size=(20, 1), key="spaceSize")
         ],   
         [
@@ -68,7 +76,7 @@ def run():
             sg.In(size=(20, 1), key="spaceCoord")
         ],   
         [
-            sg.Text("Empty Glyph Size (px):",size=(19,1), tooltip=strings.emptySizeHelp),
+            sg.Text("Empty Glyph Size (px):",size=(19,1), enable_events=True, tooltip=strings.emptySizeHelp),
             sg.In(size=(20, 1), key="emptySize")
         ],
         [
@@ -99,55 +107,69 @@ def run():
             sg.Column(console_output_column),
         ]
     ]
-    window = sg.Window("Glyph Cutter 9000", layout)
+    window = sg.Window("Glyph Cutter 9000", layout, finalize=True)
+    regexSearch = "^[+-]?([0-9]((\d*))?)?$"
+    old = {'kerningSize':'',
+        'glyphSize':'',
+        'matchPX':'',
+        'colorThreshold':'',
+        'topOffset':'',
+        'bottomOFfset':'',
+        'spaceSize:':'',
+        'emptySize':'',
+        'glyphLimit':''
+        }
+    validate_inputs = ('kerningSize', 'glyphSize', 'matchPX', 'colorThreshold','topOffset','bottomOffset','spaceSize', 'emptySize','glyphLimit')
+    for key in validate_inputs:
+        window[key].bind('<Key>', ' KEY')
+
     # Create an event loop
     while True:
         event, values = window.read()
-        # End program if user closes window or
-        # presses the OK button
+        # End program if user closes window
         if event == sg.WIN_CLOSED:
             break
-        # Image selected, display it.
-        
-        if event == "-CUTFONTS-":
-            cutFonts(values) 
+        elif event == "-CUTFONTS-":
+            cutFonts(values)
+        elif event.endswith(' KEY'):
+            key = event.split()[0]
+            element, text = window[key], values[key]
+            if validate(text):
+                with contextlib.suppress(ValueError):
+                    if not text:
+                        element.update(text)
+                        old[key] = text
+                        continue
+                    v = int(text)
+                    element.update(v)
+                    old[key] = v
+                    continue
+            else:
+                print(f'Integers in {key} only.')
+                element.update(old[key])
     window.close()
     sys.exit()
     
 def cutFonts(values):
-    try:
-        imageFile = values['imageFile']
-        outputFile = values['outputFile']
-        kerningSize = int(values['kerningSize'])
-        glyphSize = int(values['glyphSize'])
-        templateFile = values['templateFile']
-        leftKerning = values['leftKerning']
-        rightKerning = values['rightKerning']
-        solidBehavior = values['solidBehavior']
-        spaceCoord = values['spaceCoord']
-        if not templateFile:
-            templateFile = None
-        if not leftKerning:
-            leftKerning = None
-        if not rightKerning:
-            rightKerning = None
-        if not solidBehavior:
-            solidBehavior = None
-        matchPX = None if not values['matchPX'] else int(values['matchPX'])
-        colorThreshold = None if not values['colorThreshold'] else int(values['colorThreshold'])
-        topOffset = None if not values['topOffset'] else int(values['topOffset'])
-        bottomOffset = None if not values['bottomOffset'] else int(values['bottomOffset'])
-        spaceSize = None if not values['spaceSize'] else int(values['spaceSize'])
-        emptySize = None if not values['emptySize'] else int(values['emptySize']) 
-        glyphLimit = None if not values['glyphLimit'] else int(values['glyphLimit'])
-        retry = values['retry']
-        if not spaceCoord:
-            spaceCoord = None
-    except Exception:
-        sg.popup_error("Parameter failure, a size could not be converted to integer.")
-        return
+    imageFile = values['imageFile'] or None
+    outputFile = values['outputFile'] or None
+    kerningSize = None if values['kerningSize'] == '' else int(values['kerningSize'])
+    glyphSize = None if values['glyphSize'] == '' else int(values['glyphSize'])
+    templateFile = values['templateFile'] or None
+    spaceCoord = values['spaceCoord'] or None
+    matchPX = None if values['matchPX'] == '' else int(values['matchPX'])
+    colorThreshold = None if values['colorThreshold'] == '' else int(values['colorThreshold'])
+    topOffset = None if values['topOffset'] == '' else int(values['topOffset'])
+    bottomOffset = None if values['bottomOffset'] == '' else int(values['bottomOffset'])
+    spaceSize = None if values['spaceSize'] == '' else int(values['spaceSize'])
+    emptySize = None if values['emptySize'] == '' else int(values['emptySize']) 
+    glyphLimit = None if values['glyphLimit'] == '' else int(values['glyphLimit'])
+    retry = values['retry']
+    leftKerning = values['leftKerning']
+    rightKerning = values['rightKerning']
+    solidBehavior = values['solidBehavior']
     #if not imageFile or not outputFile or not kerningSize or not glyphSize:
-    if not imageFile or not outputFile or kerningSize == "" or glyphSize == "":
+    if None in (imageFile, outputFile, kerningSize, glyphSize):
         sg.popup_error("Missing a required field.")
         return
     try:
@@ -158,7 +180,7 @@ def cutFonts(values):
         output.write(process)
     except Exception as e:
         sg.popup_error_with_traceback(str(e))
-    if not round(random.random() * 100) == 69:
+    if round(random.random() * 100) != 69:
         print("Finished cutting fonts. Thank you and have a wonderful day.")
     else:
         print("Finished cutting fonts, now get the hell off my property.")

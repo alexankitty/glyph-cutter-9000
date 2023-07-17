@@ -4,6 +4,7 @@ import regex
 
 class Font:
     def __init__(self, imagePath, size, kerning, empty, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, template):
+        # sourcery skip: raise-specific-error
         self.image = Image.open(imagePath)
         self.glyphSize = size
         self.kerning = kerning
@@ -11,26 +12,14 @@ class Font:
         self.leftKerning = leftKerning
         self.rightKerning = rightKerning
         self.width, self.height = self.image.size
-        if not topOffset:
-            self.topOffset = 0
-        else:
-            self.topOffset = topOffset
+        self.topOffset = topOffset or 0
         if not bottomOffset:
             self.bottomOffset = self.glyphSize
         else:
             self.bottomOffset = self.glyphSize - bottomOffset
-        if not matchPx:
-            self.matchPx = 1
-        else:
-            self.matchPx = matchPx
-        if not empty:
-            self.empty = 0
-        else:
-            self.empty = empty // 2
-        if not space:
-            self.spaceSize = 0
-        else:
-            self.spaceSize = space // 2
+        self.matchPx = matchPx or 1
+        self.empty = empty // 2 if empty else 0
+        self.spaceSize = space // 2 if space else 0
         if spaceCoord:
             string = spaceCoord.split(",")
             self.spaceX = int(string[0]) // self.glyphSize
@@ -38,13 +27,10 @@ class Font:
             self.space = True
         else:
             self.space = False
-        if solidBehavior:
-            self.solidBehavior = True
-        else:
-            self.solidBehavior = False
+        self.solidBehavior = bool(solidBehavior)
         if self.width % self.glyphSize or self.height % self.glyphSize:
-            raise Exception("""Image width and height must be equally divisible by the glyph size!\n
-                            Image size: X:%s Y:%s Provided Glyph Size: %spx""" % (self.width, self.height, self.glyphSize))
+            raise Exception(f"""Image width and height must be equally divisible by the glyph size!\n
+                            Image size: X:{self.width} Y:{self.height} Provided Glyph Size: {self.glyphSize}px""")
         self.glyphColumns = self.width // self.glyphSize
         self.glyphRows = self.height // self.glyphSize
         if not glyphLimit:
@@ -54,7 +40,6 @@ class Font:
         elif glyphLimit > 0:
             self.glyphLimit = glyphLimit
         self.refColor = self.image.getpixel((0,0))
-        
         if isinstance(self.refColor, tuple):
             for z in range(len(self.refColor)):
                 if not colorThreshold:
@@ -65,8 +50,10 @@ class Font:
             self.colorThreshold = self.refColor
         else:
             self.colorThreshold = self.refColor + colorThreshold
-        self.cuts = [[None for cols in range(self.glyphColumns)] for rows in range(self.glyphRows)]
-        self.retry = retry if retry else None
+        self.cuts = [
+            [None for _ in range(self.glyphColumns)] for _ in range(self.glyphRows)
+        ]
+        self.retry = retry or False
     def cutGlyphs(self):
         glyphCount = 0
         for row in range(self.glyphRows):
@@ -115,17 +102,17 @@ class Font:
                         x = 0
                         y = 0
                         retrying = True
-                        print("Failed to find a cut for X:%s Y:%s. Retrying without offsets." % (row, col))
+                        print(F"Failed to find a cut for X:{row} Y:{col}. Retrying without offsets.")
                 center = self.glyphSize // 2
                 if self.space == True and row == self.spaceX and col == self.spaceY:
                     self.cuts[row][col] = (center - self.spaceSize, center + self.spaceSize)
                 
                 elif cutPosL == None and cutPosR == None:
                     if self.empty == 0:
-                        print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s." % (row, col, 0))
+                        print(f"Couldn't find a cut for glyph segment: X:{row} Y:{col}. Using 0.")
                         self.cuts[row][col] = (0,0)
                     else:
-                        print("Couldn't find a cut for glyph segment: X:%s Y:%s. Using %s from center." % (row, col, self.empty))
+                        print(f"Couldn't find a cut for glyph segment: X:{row} Y:{col}. Using {self.empty} from center.")
                         self.cuts[row][col] = (center - self.empty, center + self.empty)
                 elif cutPosL == 0 and cutPosR == self.glyphSize - 1:
                     if self.solidBehavior:
@@ -157,66 +144,65 @@ class Font:
         # Safety protection
         if not self.template:
             return self.defaultProcessing()
-        else:
-            self.templateLeftover = Path(self.template).read_text(encoding='UTF-8')
-            self.checkTemplateStrings()
-            advancedFormat = self.checkAdvancedFormat()
-            if advancedFormat:
-                colDeepest = self.getDeepestItem("startcol", self.templateLeftover) > self.getDeepestItem("startrow", self.templateLeftover)
-                if colDeepest and advancedFormat:
-                    templateColumn = self.getSectionTemplate("col", self.templateLeftover)
-                    templateRow = self.getSectionTemplate("row", self.templateLeftover)
-                else:
-                    templateRow = self.getSectionTemplate("row", self.templateLeftover)
-                    templateColumn = self.getSectionTemplate("col", self.templateLeftover)
-            processedColumn = ""
-            processedRow = ""
-            processedTemplate = ""
-            if not advancedFormat:
-                for row in range(len(self.cuts)):
-                    if self.cuts[row] == None:
-                        break
-                    for col in range(len(self.cuts[row])):
-                        if self.cuts[row][col] == None:
-                            break
-                        cuts = self.cuts[row][col]
-                        processedTemplate += self.parseTemplate("row", self.templateLeftover, row)
-                        processedTemplate += self.parseTemplate("col", self.templateLeftover, col)
-                        processedTemplate += self.parseTemplate("leftcut", self.templateLeftover, cuts[0])
-                        processedTemplate += self.parseTemplate("rightcut", self.templateLeftover, cuts[1])
-            elif colDeepest:
-                for row in range(len(self.cuts)):
-                    processedColumn = ""
-                    if self.cuts[row] == None:
-                        break
-                    for col in range(len(self.cuts[row])):
-                        if self.cuts[row][col] == None:
-                            break
-                        cuts = self.cuts[row][col]
-                        currentColumn = self.processTemplate("col", templateColumn, col, cuts)
-                        processedColumn += currentColumn
-                    currentRow = self.parseTemplate("row", templateRow, row)
-                    currentRow = self.parseTemplate("replacecol", currentRow, processedColumn)
-                    processedRow += currentRow
-                processedTemplate = self.parseTemplate("replacerow", self.templateLeftover, processedRow)
-
+        self.templateLeftover = Path(self.template).read_text(encoding='UTF-8')
+        self.checkTemplateStrings()
+        advancedFormat = self.checkAdvancedFormat()
+        if advancedFormat:
+            colDeepest = self.getDeepestItem("startcol", self.templateLeftover) > self.getDeepestItem("startrow", self.templateLeftover)
+            if colDeepest and advancedFormat:
+                templateColumn = self.getSectionTemplate("col", self.templateLeftover)
+                templateRow = self.getSectionTemplate("row", self.templateLeftover)
             else:
-                row = 0
+                templateRow = self.getSectionTemplate("row", self.templateLeftover)
+                templateColumn = self.getSectionTemplate("col", self.templateLeftover)
+        processedColumn = ""
+        processedRow = ""
+        processedTemplate = ""
+        if not advancedFormat:
+            for row in range(len(self.cuts)):
+                if self.cuts[row] is None:
+                    break
                 for col in range(len(self.cuts[row])):
-                    processedRow = ""
-                    if self.cuts[row] == None or self.cuts[row][col] == None:
+                    if self.cuts[row][col] is None:
                         break
-                    while row < len(self.cuts):
-                        cuts = self.cuts[row][col]
-                        currentRow = self.processTemplate("row", templateRow, row, cuts)
-                        processedRow += currentRow
-                        row += 1
-                    row = 0
-                    currentColumn = self.parseTemplate("col", templateColumn, col)
-                    currentColumn = self.parseTemplate("replacerow",currentColumn,processedRow)
+                    cuts = self.cuts[row][col]
+                    processedTemplate += self.parseTemplate("row", self.templateLeftover, row)
+                    processedTemplate += self.parseTemplate("col", self.templateLeftover, col)
+                    processedTemplate += self.parseTemplate("leftcut", self.templateLeftover, cuts[0])
+                    processedTemplate += self.parseTemplate("rightcut", self.templateLeftover, cuts[1])
+        elif colDeepest:
+            for row in range(len(self.cuts)):
+                processedColumn = ""
+                if self.cuts[row] is None:
+                    break
+                for col in range(len(self.cuts[row])):
+                    if self.cuts[row][col] is None:
+                        break
+                    cuts = self.cuts[row][col]
+                    currentColumn = self.processTemplate("col", templateColumn, col, cuts)
                     processedColumn += currentColumn
-                processedTemplate = self.parseTemplate("replacecol", self.templateLeftover, processedColumn)
-            return processedTemplate
+                currentRow = self.parseTemplate("row", templateRow, row)
+                currentRow = self.parseTemplate("replacecol", currentRow, processedColumn)
+                processedRow += currentRow
+            processedTemplate = self.parseTemplate("replacerow", self.templateLeftover, processedRow)
+
+        else:
+            row = 0
+            for col in range(len(self.cuts[row])):
+                processedRow = ""
+                if self.cuts[row] is None or self.cuts[row][col] is None:
+                    break
+                while row < len(self.cuts):
+                    cuts = self.cuts[row][col]
+                    currentRow = self.processTemplate("row", templateRow, row, cuts)
+                    processedRow += currentRow
+                    row += 1
+                row = 0
+                currentColumn = self.parseTemplate("col", templateColumn, col)
+                currentColumn = self.parseTemplate("replacerow",currentColumn,processedRow)
+                processedColumn += currentColumn
+            processedTemplate = self.parseTemplate("replacecol", self.templateLeftover, processedColumn)
+        return processedTemplate
             
     def parseTemplate(self, search, templateString, replace):
         replace = str(replace)
@@ -227,12 +213,12 @@ class Font:
             regExList = regex.findall(search, templateString)
             if len(regExList) == 0:
                 return templateString
-            if search == "replacerow" or search == "replacecol":
+            if search in ["replacerow", "replacecol"]:
                 templateString = regex.sub(r"\s*\$" + search, replace, templateString)
             else:
                 templateString = regex.sub(r"\$" + search, replace, templateString)
             return templateString
-        for x in range(len(regExList)):
+        for _ in range(len(regExList)):
             stringEval = regex.search(regExSearch,templateString)
             if not stringEval:
                 return templateString
@@ -243,23 +229,26 @@ class Font:
         return templateString
     
     def getSectionTemplate(self, search, templateString):
-        regExBase = r"(\$startsection)([\s\S]*)(\$endsection)"
-        regExStart = r"\s*\$startsection"
-        regExStart = regExStart.replace("section", search)
-        regExEnd = r"\s*\$endsection"
-        regExEnd = regExEnd.replace("section", search)
-        regExSearch = regExBase.replace("section", search)
+        # sourcery skip: raise-specific-error
+        regExBase = r"(\$startSection)([\s\S]*)(\$endsection)"
+        regExStart = r"\s*\$startSection"
+        regExStart = regExStart.replace("Section", search)
+        regExEnd = r"\s*\$endSection"
+        regExEnd = regExEnd.replace("Section", search)
+        regExSearch = regExBase.replace("Section", search)
         regExList = regex.findall(regExSearch, templateString)
         if len(regExList) > 1:
-            raise Exception("Only one %s section allowed!" % "$" + search)
+            raise Exception(f"Only one ${search} section allowed!")
         if len(regExList) == 0:
             return False
         templateSection = regex.search(regExSearch, templateString).group()
         templateSection = regex.sub(regExStart, "", templateSection, 1)
         templateSection = regex.sub(regExEnd, "", templateSection, 1)
-        self.templateLeftover = regex.sub(regExSearch, "$replace" + search, templateString)
+        self.templateLeftover = regex.sub(
+            regExSearch, f"$replace{search}", templateString
+        )
         return templateSection
-
+    
     def processTemplate(self, search, template, replace, cuts):
         template = self.parseTemplate(search, template, replace)
         template = self.parseTemplate("leftcut", template, cuts[0])
@@ -268,13 +257,12 @@ class Font:
     
     def checkIfExist(self, search, template):
         regExList = regex.findall(r"\$" + search, template)
-        return True if len(regExList) else False
+        return bool(len(regExList))
     
     def getDeepestItem(self, search, template):
-        deepest = regex.search(r"\$"+ search, template).span()[1]
-        return deepest
+        return regex.search(r"\$"+ search, template).span()[1]
     
-    def checkTemplateStrings(self):
+    def checkTemplateStrings(self):  # sourcery skip: raise-specific-error
         missing = ""
         missingCount = 0
         print("checking template strings")
@@ -291,10 +279,10 @@ class Font:
             missing += " $rightcut"
             missingCount += 1
         if missingCount == 4:
-            raise Exception("Template has no replaceable strings, verify one of %s are present." % missing)
+            raise Exception(f"Template has no replaceable strings, verify one of {missing} are present.")
         elif missingCount:
-            print("The following items are missing in the template, output may not be as expected: %s." % missing)
-    def checkAdvancedFormat(self):
+            print(f"The following items are missing in the template, output may not be as expected: {missing}.")
+    def checkAdvancedFormat(self):  # sourcery skip: raise-specific-error
         missing = ""
         missingCount = 0
         if not self.checkIfExist("startcol", self.templateLeftover):
@@ -309,20 +297,22 @@ class Font:
         if not self.checkIfExist("endrow", self.templateLeftover):
             missing += " $endrow"
             missingCount += 1
-        if missingCount == 4:
-            return False
-        elif missingCount == 0:
+        if missingCount == 0:
             return True
+        elif missingCount == 4:
+            return False
         else:
-            raise Exception("Not all criteria of advanced formatting are met. The following are missing: %s." % missing)
+            raise Exception(
+                f"Not all criteria of advanced formatting are met. The following are missing: {missing}."
+            )
     def defaultProcessing(self):
         processed = ""
         #Default processing if we don't have a template
         for row in range(len(self.cuts)):
-            if self.cuts[row] == None:
+            if self.cuts[row] is None:
                 return processed
             for col in range(len(self.cuts[row])):
-                if self.cuts[row][col] == None:
+                if self.cuts[row][col] is None:
                     return processed
                 processed += "(%s,%s)," % self.cuts[row][col]
             processed += "\n"

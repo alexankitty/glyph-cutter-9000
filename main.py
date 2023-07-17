@@ -130,8 +130,8 @@ else:
     colorThreshold = args.colorThreshold
     glyphLimit = args.glyphLimit
     retry = args.retry
-    if imageFile == None or glyphSize == None or kerningSize == None or  outputFile == None:
-        print("Missing required arguments")
+    if None in(imageFile, glyphSize, kerningSize, outputFile):
+        print("Missing required arguments.")
         parser.print_help()
         sys.exit()
     font = imageProcessor.Font(imageFile, glyphSize, kerningSize, emptySize, space, spaceCoord, solidBehavior, leftKerning, rightKerning, matchPx, topOffset, bottomOffset, colorThreshold, glyphLimit, retry, templateFile)
@@ -139,7 +139,7 @@ else:
     process = font.processCuts()
     output = open(outputFile, 'w')
     output.write(process)
-    if not round(random.random() * 100) == 69:
+    if round(random.random() * 100) != 69:
         print("Finished cutting fonts. Thank you and have a wonderful day.")
     else:
         print("Finished cutting fonts, now get the hell off my property.")
